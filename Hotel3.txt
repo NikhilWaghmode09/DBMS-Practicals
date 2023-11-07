@@ -1,0 +1,146 @@
+— hotel3
+
+/*
+The following tables form part of a database held in a relational DBMS:
+Hotel (HotelNo, Name, City) HotelNo is the primary key
+Room (RoomNo, HotelNo, Type, Price)
+Booking (HotelNo, GuestNo, DateFrom, DateTo, RoomNo)
+Guest (GuestNo, GuestName, GuestAddress) GuestNo is primary key
+Room contains room details for each hotel and (HotelNo, RoomNo) forms the
+primary key.Booking contains details of the bookings and the primary key comprises
+(HotelNo, GuestNo and DateFrom)
+Solve following queries by SQL
+1. List full details of all hotels.
+
+SELECT * FROM Hotel;
+
+2. How many hotels are there?
+
+SELECT COUNT(*) FROM Hotel;
+
+3. List the price and type of all rooms at the Grosvenor Hotel.
+
+SELECT Type, Price
+FROM Room
+WHERE HotelNo = (SELECT HotelNo FROM Hotel WHERE Name = 'Grosvenor Hotel');
+
+4. List the number of rooms in each hotel.
+
+SELECT Hotel.Name, COUNT(Room.RoomNo) AS NumberOfRooms
+FROM Hotel
+LEFT JOIN Room ON Hotel.HotelNo = Room.HotelNo
+GROUP BY Hotel.Name;
+
+5. Update the price of all rooms by 5%.
+
+UPDATE Room
+SET Price = Price * 1.05;
+
+6. List full details of all hotels in London.
+
+SELECT *
+FROM Hotel
+WHERE City = 'London';
+
+7. What is the average price of a room?
+
+SELECT AVG(Price) AS AveragePrice
+FROM Room;
+
+8. List all guests currently staying at the Grosvenor Hotel.
+
+SELECT Guest.GuestName
+FROM Guest
+JOIN Booking ON Guest.GuestNo = Booking.GuestNo
+WHERE Booking.HotelNo = (SELECT HotelNo FROM Hotel WHERE Name = 'Grosvenor Hotel');
+
+9. List the number of rooms in each hotel in London.
+
+SELECT Hotel.Name, COUNT(Room.RoomNo) AS NumberOfRooms
+FROM Hotel
+LEFT JOIN Room ON Hotel.HotelNo = Room.HotelNo
+WHERE Hotel.City = 'London'
+GROUP BY Hotel.Name;
+
+10.Create one view on above database and query it
+
+CREATE VIEW HotelRoomCount AS
+SELECT Hotel.Name, Hotel.City, COUNT(Room.RoomNo) AS NumberOfRooms
+FROM Hotel
+LEFT JOIN Room ON Hotel.HotelNo = Room.HotelNo
+GROUP BY Hotel.Name, Hotel.City;
+
+SELECT * FROM HotelRoomCount;
+
+
+*/
+
+
+— DATABASE
+
+-- Create Hotel table
+CREATE TABLE Hotel (
+    HotelNo INT PRIMARY KEY,
+    Name VARCHAR(255),
+    City VARCHAR(255)
+);
+
+-- Create Room table
+CREATE TABLE Room (
+    RoomNo INT,
+    HotelNo INT,
+    Type VARCHAR(255),
+    Price DECIMAL(10, 2),
+    PRIMARY KEY (HotelNo, RoomNo),
+    FOREIGN KEY (HotelNo) REFERENCES Hotel(HotelNo)
+);
+
+-- Create Guest table
+CREATE TABLE Guest (
+    GuestNo INT PRIMARY KEY,
+    GuestName VARCHAR(255),
+    GuestAddress VARCHAR(255)
+);
+
+-- Create Booking table
+CREATE TABLE Booking (
+    HotelNo INT,
+    GuestNo INT,
+    DateFrom DATE,
+    DateTo DATE,
+    RoomNo INT,
+    PRIMARY KEY (HotelNo, GuestNo, DateFrom),
+    FOREIGN KEY (HotelNo) REFERENCES Hotel(HotelNo),
+    FOREIGN KEY (GuestNo) REFERENCES Guest(GuestNo),
+    FOREIGN KEY (HotelNo, RoomNo) REFERENCES Room(HotelNo, RoomNo)
+);
+
+-- Insert sample data
+INSERT INTO Hotel (HotelNo, Name, City) VALUES
+(1, 'Grosvenor Hotel', 'London'),
+(2, 'Hilton Hotel', 'New York'),
+(3, 'Sheraton Hotel', 'Paris');
+
+INSERT INTO Room (RoomNo, HotelNo, Type, Price) VALUES
+(101, 1, 'Single', 150.00),
+(102, 1, 'Double', 200.00),
+(201, 2, 'Single', 180.00),
+(202, 2, 'Double', 250.00),
+(301, 3, 'Single', 160.00),
+(302, 3, 'Double', 220.00);
+
+INSERT INTO Guest (GuestNo, GuestName, GuestAddress) VALUES
+(1, 'John Smith', '123 Main St, London'),
+(2, 'Alice Johnson', '456 Elm St, New York'),
+(3, 'Eva Martin', '789 Oak St, Paris');
+
+INSERT INTO Booking (HotelNo, GuestNo, DateFrom, DateTo, RoomNo) VALUES
+(1, 1, '2023-01-01', '2023-01-10', 101),
+(2, 2, '2023-02-15', '2023-02-25', 201),
+(3, 3, '2023-03-20', '2023-03-30', 301);
+
+
+— Topics 
+/*
+a view is a virtual table that is based on the result of a SELECT query. A view allows you to create a structured representation of data in one or more tables, which can be queried just like a regular table. Views are a way to simplify complex queries, provide an additional layer of security, and improve data access and management.
+*/
