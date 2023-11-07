@@ -1,0 +1,15 @@
+. Create the following tables. Solve queries by SQL
+• Deposit (actno,cname,bname,amount,adate)
+• Branch (bname,city)
+• Customers (cname, city)
+• Borrow(loanno,cname,bname, amount)
+Add primary key and foreign key wherever applicable.
+Insert data into the above created tables.
+a. Display account date of customers Anil.
+b. Modify the size of attribute of amount in deposit
+c. Display names of customers living in city pune.
+d. Display name of the city where branch KAROLBAGH is located.
+e. Find the number of tuples in the customer relation
+f. Delete all the record of customers Sunil
+g. Create a view on deposit table.
+
