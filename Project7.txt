@@ -1,0 +1,90 @@
+Consider the following database
+Project(project_id,proj_name,chief_arch) , project_id is primary key
+Employee(Emp_id,Emp_name) , Emp_id is primary key
+Assigned-To(Project_id,Emp_id)
+Find the SQL queries for the following:
+1. Get the details of employees working on project C353
+2. Get employee number of employees working on project C353
+3. Obtain details of employees working on Database project
+4. Get details of employees working on both C353 and C354
+5. Get employee numbers of employees who do not work on project C453
+
+-- Create the Project table
+CREATE TABLE Project (
+    project_id INT PRIMARY KEY,
+    proj_name VARCHAR(255),
+    chief_arch INT,
+    FOREIGN KEY (chief_arch) REFERENCES Employee(Emp_id)
+);
+
+-- Create the Employee table
+CREATE TABLE Employee (
+    Emp_id INT PRIMARY KEY,
+    Emp_name VARCHAR(255)
+);
+
+-- Create the Assigned-To table
+CREATE TABLE Assigned_To (
+    project_id INT,
+    Emp_id INT,
+    FOREIGN KEY (project_id) REFERENCES Project(project_id),
+    FOREIGN KEY (Emp_id) REFERENCES Employee(Emp_id)
+);
+
+-- Insert sample data
+INSERT INTO Project (project_id, proj_name, chief_arch)
+VALUES 
+    (1, 'C353', 101),
+    (2, 'C354', 102),
+    (3, 'Database', 103);
+
+INSERT INTO Employee (Emp_id, Emp_name)
+VALUES 
+    (101, 'John Doe'),
+    (102, 'Jane Smith'),
+    (103, 'Bob Johnson');
+
+INSERT INTO Assigned_To (project_id, Emp_id)
+VALUES 
+    (1, 101),
+    (2, 102),
+    (3, 101),
+    (3, 103);
+
+-- Queries
+-- 1. Get the details of employees working on project C353
+SELECT e.Emp_id, e.Emp_name
+FROM Employee e
+INNER JOIN Assigned_To at ON e.Emp_id = at.Emp_id
+INNER JOIN Project p ON at.project_id = p.project_id
+WHERE p.proj_name = 'C353';
+
+-- 2. Get employee number of employees working on project C353
+SELECT COUNT(*) AS EmployeeCount
+FROM Employee e
+INNER JOIN Assigned_To at ON e.Emp_id = at.Emp_id
+INNER JOIN Project p ON at.project_id = p.project_id
+WHERE p.proj_name = 'C353';
+
+-- 3. Obtain details of employees working on Database project
+SELECT e.Emp_id, e.Emp_name
+FROM Employee e
+INNER JOIN Assigned_To at ON e.Emp_id = at.Emp_id
+INNER JOIN Project p ON at.project_id = p.project_id
+WHERE p.proj_name = 'Database';
+
+-- 4. Get details of employees working on both C353 and C354
+SELECT e.Emp_id, e.Emp_name
+FROM Employee e
+INNER JOIN Assigned_To at ON e.Emp_id = at.Emp_id
+INNER JOIN Project p ON at.project_id = p.project_id
+WHERE p.proj_name IN ('C353', 'C354')
+GROUP BY e.Emp_id, e.Emp_name
+HAVING COUNT(DISTINCT p.proj_name) = 2;
+
+-- 5. Get employee numbers of employees who do not work on project C453
+SELECT e.Emp_id, e.Emp_name
+FROM Employee e
+LEFT JOIN Assigned_To at ON e.Emp_id = at.Emp_id
+LEFT JOIN Project p ON at.project_id = p.project_id
+WHERE p.project_id IS NULL OR p.proj_name != 'C453';
