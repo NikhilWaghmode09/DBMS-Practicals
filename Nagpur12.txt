@@ -1,0 +1,135 @@
+Create the following tables. Solve queries by SQL
+• Deposit (actno,cname,bname,amount,adate)
+• Branch (bname,city)
+• Customers (cname, city)
+• Borrow(loanno,cname,bname, amount)
+Add primary key and foreign key wherever applicable.
+Insert data into the above created tables.
+ Solve following queries by SQL
+1. Display customer name having living city Bombay and branch city Nagpur
+2. Display customer name having same living city as their branch city
+3. Display customer name who are borrowers as well as depositors and having
+living city Nagpur.
+4. Display borrower names having deposit amount greater than 1000 and loan
+amount greater than 2000
+5. Display customer name living in the city where branch of depositor sunil is
+located.
+6. Create an index on deposit table
+
+-- Create the Deposit table
+CREATE TABLE Deposit (
+    actno INT PRIMARY KEY,
+    cname VARCHAR(50),
+    bname VARCHAR(50),
+    amount DECIMAL(10, 2),
+    adate DATE
+);
+
+-- Create the Branch table
+CREATE TABLE Branch (
+    bname VARCHAR(50) PRIMARY KEY,
+    city VARCHAR(50)
+);
+
+-- Create the Customers table
+CREATE TABLE Customers (
+    cname VARCHAR(50) PRIMARY KEY,
+    city VARCHAR(50)
+);
+
+-- Create the Borrow table
+CREATE TABLE Borrow (
+    loanno INT PRIMARY KEY,
+    cname VARCHAR(50),
+    bname VARCHAR(50),
+    amount DECIMAL(10, 2),
+    FOREIGN KEY (cname) REFERENCES Customers(cname),
+    FOREIGN KEY (bname) REFERENCES Branch(bname)
+);
+
+-- Insert data into tables
+-- Sample data for the tables
+INSERT INTO Deposit (actno, cname, bname, amount, adate)
+VALUES
+    (1, 'Alice', 'Nagpur', 5000.00, '2023-01-10'),
+    (2, 'Bob', 'Mumbai', 3000.00, '2023-01-15'),
+    (3, 'Charlie', 'Nagpur', 7000.00, '2023-01-20'),
+    (4, 'David', 'Pune', 2000.00, '2023-02-01');
+
+INSERT INTO Branch (bname, city)
+VALUES
+    ('Nagpur', 'Maharashtra'),
+    ('Mumbai', 'Maharashtra'),
+    ('Pune', 'Maharashtra');
+
+INSERT INTO Customers (cname, city)
+VALUES
+    ('Alice', 'Bombay'),
+    ('Bob', 'Mumbai'),
+    ('Charlie', 'Nagpur'),
+    ('David', 'Pune');
+
+INSERT INTO Borrow (loanno, cname, bname, amount)
+VALUES
+    (101, 'Alice', 'Nagpur', 1500.00),
+    (102, 'Bob', 'Mumbai', 2000.00),
+    (103, 'David', 'Pune', 3000.00);
+
+-- Queries
+-- 1. Display customer name having living city Bombay and branch city Nagpur
+SELECT c.cname
+FROM Customers c
+WHERE c.city = 'Bombay'
+AND EXISTS (
+    SELECT 1
+    FROM Branch b
+    WHERE b.bname = 'Nagpur'
+);
+-- The EXISTS keyword in SQL is used in a subquery to check whether a subquery returns any rows. It returns a Boolean value (true or false) based on whether the subquery has results. 
+-- The EXISTS condition is often used with a correlated subquery, where the subquery references columns from the outer query.
+
+-- 2. Display customer name having the same living city as their branch city
+SELECT c.cname
+FROM Customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM Branch b
+    WHERE b.bname = c.city
+);
+
+-- 3. Display customer name who are borrowers as well as depositors and having living city Nagpur
+SELECT c.cname
+FROM Customers c
+WHERE c.city = 'Nagpur'
+AND c.cname IN (
+    SELECT cname FROM Deposit
+    UNION
+    SELECT cname FROM Borrow
+);
+
+-- 4. Display borrower names having deposit amount greater than 1000 and loan amount greater than 2000
+SELECT DISTINCT b.cname
+FROM Borrow b
+WHERE EXISTS (
+    SELECT 1
+    FROM Deposit d
+    WHERE b.cname = d.cname
+    AND d.amount > 1000
+)
+AND b.amount > 2000;
+
+-- 5. Display customer name living in the city where the branch of depositor Sunil is located
+SELECT c.cname
+FROM Customers c
+WHERE c.city = (
+    SELECT city
+    FROM Branch
+    WHERE bname = (
+        SELECT bname
+        FROM Deposit
+        WHERE cname = 'Sunil'
+    )
+);
+
+-- 6. Create an index on the Deposit table
+CREATE INDEX idx_deposit_cname ON Deposit (cname);
