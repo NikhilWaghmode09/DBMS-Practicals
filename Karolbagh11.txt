@@ -13,3 +13,75 @@ e. Find the number of tuples in the customer relation
 f. Delete all the record of customers Sunil
 g. Create a view on deposit table.
 
+-- Create tables
+CREATE TABLE Deposit (
+    actno INT PRIMARY KEY,
+    cname VARCHAR(255),
+    bname VARCHAR(255),
+    amount DECIMAL(10, 2),
+    adate DATE
+);
+
+CREATE TABLE Branch (
+    bname VARCHAR(255) PRIMARY KEY,
+    city VARCHAR(255)
+);
+
+CREATE TABLE Customers (
+    cname VARCHAR(255) PRIMARY KEY,
+    city VARCHAR(255)
+);
+
+CREATE TABLE Borrow (
+    loanno INT PRIMARY KEY,
+    cname VARCHAR(255),
+    bname VARCHAR(255),
+    amount DECIMAL(10, 2),
+    FOREIGN KEY (cname) REFERENCES Customers (cname),
+    FOREIGN KEY (bname) REFERENCES Branch (bname)
+);
+
+-- Insert data
+INSERT INTO Deposit (actno, cname, bname, amount, adate) VALUES
+    (1, 'Anil', 'Branch1', 1000.00, '2023-01-15'),
+    (2, 'Sunil', 'Branch2', 2000.00, '2023-01-20'),
+    (3, 'Puneet', 'Branch3', 3000.00, '2023-02-10');
+
+INSERT INTO Branch (bname, city) VALUES
+    ('Branch1', 'Delhi'),
+    ('Branch2', 'Mumbai'),
+    ('Branch3', 'Pune');
+
+INSERT INTO Customers (cname, city) VALUES
+    ('Anil', 'Delhi'),
+    ('Sunil', 'Mumbai'),
+    ('Puneet', 'Pune');
+
+INSERT INTO Borrow (loanno, cname, bname, amount) VALUES
+    (101, 'Anil', 'Branch1', 5000.00),
+    (102, 'Sunil', 'Branch2', 6000.00),
+    (103, 'Puneet', 'Branch3', 7000.00);
+
+-- Queries
+-- a. Display account date of customers Anil.
+SELECT adate FROM Deposit WHERE cname = 'Anil';
+
+-- b. Modify the size of the attribute amount in deposit
+-- ALTER TABLE Deposit MODIFY COLUMN amount DECIMAL(12, 2);
+
+-- c. Display names of customers living in city Pune.
+SELECT cname FROM Customers WHERE city = 'Pune';
+
+-- d. Display name of the city where branch KAROLBAGH is located.
+SELECT city FROM Branch WHERE bname = 'KAROLBAGH';
+
+-- e. Find the number of tuples in the customer relation
+SELECT COUNT(*) FROM Customers;
+
+-- f. Delete all the records of customers Sunil.
+DELETE FROM Customers WHERE cname = 'Sunil';
+
+-- g. Create a view on the deposit table.
+CREATE VIEW DepositView AS
+SELECT actno, cname, amount
+FROM Deposit;
