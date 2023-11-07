@@ -1,0 +1,140 @@
+/*
+The following tables form part of a database held in a relational DBMS:
+Hotel (HotelNo, Name, City) HotelNo is primary key
+Room (RoomNo, HotelNo, Type, Price)
+Booking (HotelNo, GuestNo, DateFrom, DateTo, RoomNo)
+Guest (GuestNo, GuestName, GuestAddress) GuestNo is primary key
+Solve following queries by SQL
+1. What is the total revenue per night from all double rooms?
+2. List the details of all rooms at the Grosvenor Hotel, including the name of
+the guest staying in the room, if the room is occupied.
+3. What is the average number of bookings for each hotel in April?
+4. Create index on one of the field and show is performance in query.
+5. List full details of all hotels.
+6. List full details of all hotels in London.
+7. Update the price of all rooms by 5%.
+8. List the number of rooms in each hotel in London.
+9. List all double or family rooms with a price below £40.00 per night, in
+ascending order of price.
+*/
+CREATE TABLE Hotel (
+    HotelNo INT PRIMARY KEY,
+    Name VARCHAR(255),
+    City VARCHAR(255)
+);
+
+INSERT INTO Hotel (HotelNo, Name, City)
+VALUES
+    (1, 'Grosvenor Hotel', 'London'),
+    (2, 'Parkside Inn', 'New York'),
+    (3, 'Riverside Resort', 'Los Angeles');
+
+CREATE TABLE Room (
+    RoomNo INT PRIMARY KEY,
+    HotelNo INT,
+    Type VARCHAR(255),
+    Price DECIMAL(10, 2),
+    FOREIGN KEY (HotelNo) REFERENCES Hotel(HotelNo)
+);
+
+INSERT INTO Room (RoomNo, HotelNo, Type, Price)
+VALUES
+    (101, 1, 'Double', 100.00),
+    (102, 1, 'Single', 80.00),
+    (201, 2, 'Family', 120.00),
+    (202, 2, 'Single', 90.00),
+    (301, 3, 'Double', 110.00),
+    (302, 3, 'Single', 85.00);
+
+CREATE TABLE Booking (
+    HotelNo INT,
+    GuestNo INT,
+    DateFrom DATE,
+    DateTo DATE,
+    RoomNo INT,
+    FOREIGN KEY (HotelNo) REFERENCES Hotel(HotelNo),
+    FOREIGN KEY (GuestNo) REFERENCES Guest(GuestNo),
+    FOREIGN KEY (RoomNo) REFERENCES Room(RoomNo)
+);
+
+INSERT INTO Booking (HotelNo, GuestNo, DateFrom, DateTo, RoomNo)
+VALUES
+    (1, 101, '2023-04-10', '2023-04-15', 101),
+    (2, 102, '2023-05-05', '2023-05-08', 201),
+    (1, 103, '2023-06-20', '2023-06-25', 102),
+    (3, 104, '2023-04-15', '2023-04-18', 301),
+    (2, 105, '2023-07-10', '2023-07-15', 202);
+
+CREATE TABLE Guest (
+    GuestNo INT PRIMARY KEY,
+    GuestName VARCHAR(255),
+    GuestAddress VARCHAR(255)
+);
+
+INSERT INTO Guest (GuestNo, GuestName, GuestAddress)
+VALUES
+    (101, 'John Smith', '123 Main St, London'),
+    (102, 'Mary Johnson', '456 Elm St, New York'),
+    (103, 'David Lee', '789 Oak St, London'),
+    (104, 'Sarah Brown', '101 Pine St, Los Angeles'),
+    (105, 'James Wilson', '202 Cedar St, New York');
+
+-- q1
+SELECT SUM(Price) AS TotalRevenue
+FROM Room
+WHERE Type = 'Double';
+-- q2
+SELECT H.Name AS HotelName, R.RoomNo, R.Type, R.Price, G.GuestName
+FROM Hotel H
+INNER JOIN Room R ON H.HotelNo = R.HotelNo
+LEFT JOIN Booking B ON R.RoomNo = B.RoomNo
+LEFT JOIN Guest G ON B.GuestNo = G.GuestNo
+WHERE H.Name = 'Grosvenor Hotel';
+-- q3
+SELECT H.Name AS HotelName, AVG(COUNT(B.BookingID)) AS AvgBookings
+FROM Hotel H
+LEFT JOIN Booking B ON H.HotelNo = B.HotelNo
+WHERE DATEPART(MONTH, B.DateFrom) = 4
+GROUP BY H.Name;
+-- q4
+CREATE INDEX idx_Price ON Room (Price);
+/*Creating an index on the "Price" field in the "Room" table. The performance improvement will depend on the specific queries you run and the volume of data. 
+Indexes generally improve the performance of SELECT queries but might slow down INSERT, UPDATE, and DELETE operations.*/
+-- q5
+SELECT *
+FROM Hotel;
+-- q6
+SELECT *
+FROM Hotel
+WHERE City = 'London';
+-- q7
+UPDATE Room
+SET Price = Price * 1.05;
+-- q8
+SELECT H.Name AS HotelName, COUNT(R.RoomNo) AS NumberOfRooms
+FROM Hotel H
+INNER JOIN Room R ON H.HotelNo = R.HotelNo
+WHERE H.City = 'London'
+GROUP BY H.Name;
+-- q9
+SELECT *
+FROM Room
+WHERE (Type = 'Double' OR Type = 'Family') AND Price < 40.00
+ORDER BY Price ASC;
+
+
+-- KEYWORDS
+/*
+INDEX: A keyword used to create an index on one or more columns of a database table to improve the retrieval performance of data in SELECT queries. 
+Indexes are data structures that allow the database management system to quickly locate and access the rows in a table, making queries faster by reducing 
+the need for full table scans.
+
+INNER JOIN: Keyword used to combine rows from two or more tables based on a related column between them.
+LEFT JOIN: Keyword used to combine rows from two or more tables, including all rows from the left table and matching rows from the right table.
+GROUP BY: Keyword used to group rows in a result set based on the values in one or more columns.
+COUNT: Keyword used to count the number of rows in a result set.
+AVG: Keyword used to calculate the average of a set of numeric values.
+UPDATE: Keyword used to modify existing data in a database table.
+SET: Keyword used to specify the new values for columns when using the UPDATE statement.
+ORDER BY: Keyword used to sort the result set in ascending or descending order based on one or more columns.
+*/
