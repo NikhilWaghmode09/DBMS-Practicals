@@ -1,0 +1,143 @@
+/*
+Create a database
+1. employee (employee name, street, city) ,employee name is primary key
+2. works (employee name, company name, salary)
+3. company (company name, city) ,company name is primary key
+4. manages (employee name, manager name)
+Give an expression in SQL for each of the following queries.
+1. Find the names of all employees who work for First Bank Corporation.
+2. Find all employees who do not work for First Bank Coorporation
+3. Find the company that has most employees.
+4. Find all companies located in every in which small bank corporation is located
+5. Find details of employee having salary greater than 10,000.
+6. Update salary of all employees who work for First Bank Corporation by 10%.
+7. Find employee and their managers.
+8. Find the names, street and cities of all employees who work for First Bank
+Corporation and earn more than 10,000.
+9. Find those companies whose employees earn a higher salary,on average, than th
+average salary at First Bank Corporation
+*/
+
+CREATE TABLE employee (
+    employee_name VARCHAR(50) PRIMARY KEY,
+    street VARCHAR(50),
+    city VARCHAR(50)
+);
+
+CREATE TABLE works (
+    employee_name VARCHAR(50),
+    company_name VARCHAR(50),
+    salary DECIMAL(10, 2),
+    FOREIGN KEY (employee_name) REFERENCES employee(employee_name),
+    FOREIGN KEY (company_name) REFERENCES company(company_name)
+);
+
+CREATE TABLE company (
+    company_name VARCHAR(50) PRIMARY KEY,
+    city VARCHAR(50)
+);
+
+CREATE TABLE manages (
+    employee_name VARCHAR(50),
+    manager_name VARCHAR(50),
+    FOREIGN KEY (employee_name) REFERENCES employee(employee_name),
+    FOREIGN KEY (manager_name) REFERENCES employee(employee_name)
+);
+
+-- Sample data
+INSERT INTO employee VALUES ('John', '123 Main St', 'New York');
+INSERT INTO employee VALUES ('Alice', '456 Elm St', 'Los Angeles');
+INSERT INTO employee VALUES ('Bob', '789 Oak St', 'San Francisco');
+
+INSERT INTO company VALUES ('First Bank Corporation', 'New York');
+INSERT INTO company VALUES ('Small Bank Corporation', 'Los Angeles');
+INSERT INTO company VALUES ('Big Corporation', 'San Francisco');
+
+INSERT INTO works VALUES ('John', 'First Bank Corporation', 15000.00);
+INSERT INTO works VALUES ('Alice', 'First Bank Corporation', 12000.00);
+INSERT INTO works VALUES ('Bob', 'Small Bank Corporation', 11000.00);
+
+INSERT INTO manages VALUES ('Alice', 'John');
+INSERT INTO manages VALUES ('Bob', 'John');
+
+-- q1
+SELECT employee_name
+FROM works
+WHERE company_name = 'First Bank Corporation';
+
+-- q2 
+SELECT employee_name
+FROM employee
+WHERE employee_name NOT IN (
+    SELECT employee_name
+    FROM works
+    WHERE company_name = 'First Bank Corporation'
+);
+
+-- q3 
+SELECT company_name
+FROM works
+GROUP BY company_name
+ORDER BY COUNT(*) DESC
+LIMIT 1;
+
+-- q4
+SELECT DISTINCT c.company_name
+FROM company c
+WHERE c.city IN (
+    SELECT c2.city
+    FROM company c2
+    WHERE c2.company_name = 'Small Bank Corporation'
+);
+
+-- q5
+SELECT e.*
+FROM employee e
+JOIN works w ON e.employee_name = w.employee_name
+WHERE w.salary > 10000.00;
+
+-- q6
+UPDATE works
+SET salary = salary * 1.10
+WHERE company_name = 'First Bank Corporation';
+
+-- q7
+SELECT e.employee_name, m.manager_name
+FROM employee e
+LEFT JOIN manages m ON e.employee_name = m.employee_name;
+
+-- q8
+SELECT e.employee_name, e.street, e.city
+FROM employee e
+JOIN works w ON e.employee_name = w.employee_name
+WHERE w.company_name = 'First Bank Corporation' AND w.salary > 10000.00;
+
+-- q9
+SELECT c.company_name
+FROM company c
+JOIN works w ON c.company_name = w.company_name
+GROUP BY c.company_name
+HAVING AVG(w.salary) > (SELECT AVG(salary) FROM works WHERE company_name = 'First Bank Corporation');
+
+
+-- KEYWORDS
+
+/*
+SELECT: Retrieves data from a database table.
+FROM: Specifies the table from which to retrieve data.
+WHERE: Filters the rows returned based on a specified condition.
+INSERT INTO: Adds new data into a table.
+CREATE TABLE: Defines a new database table and its structure.
+PRIMARY KEY: Specifies a column as a unique identifier for each row in a table.
+FOREIGN KEY: Establishes a relationship between tables using a common column.
+GROUP BY: Groups rows with similar values in a specified column.
+ORDER BY: Sorts the result set based on the values in one or more columns.
+COUNT: Calculates the number of rows in a result set.
+DISTINCT: Filters out duplicate values from the result set.
+LIMIT: Restricts the number of rows returned in the result set.
+JOIN: Combines data from multiple tables based on a related column.
+LEFT JOIN: Retrieves all records from the left table and matching records from the right table.
+UPDATE: Modifies existing data in a table.
+AVG: Calculates the average value of a numeric column.
+HAVING: Filters the result set after applying the GROUP BY clause.
+*/
