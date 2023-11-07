@@ -1,0 +1,139 @@
+Create the following tables.
+1)PUBLISHER( PID , PNAME ,ADDRESS ,STATE ,PHONE ,EMAILID );
+2)BOOK( ISBN ,BOOK_TITLE , CATEGORY , PRICE , COPYRIGHT_DATE , YEAR ,PAGE_COUNT ,PID );
+3) AUTHOR(AID,ANAME,STATE,CITY ,ZIP,PHONE,URL )
+4) AUTHOR_BOOK(AID,ISBN);
+5) REVIEW(RID,ISBN,RATING);
+Solve following queries by SQL
+1. Retrieve city, phone, url of author whose name is ‘CHETAN BHAGAT’.
+2. Retrieve book title, reviewable id and rating of all books.
+3. Retrieve book title, price, author name and url for publishers ‘MEHTA’.
+4. In a PUBLISHER relation change the phone number of ‘MEHTA’ to 123456
+5. Calculate and display the average, maximum, minimum price of each publisher.
+6. Delete details of all books having a page count less than 100.
+7. Retrieve details of all authors residing in city Pune and whose name begins with character
+‘C’.
+8. Retrieve details of authors residing in same city as ‘Korth’.
+9. Create a procedure to update the value of page count of a book of given ISBN.
+10. Create a function that returns the price of book with a given ISBN
+
+-- Create tables
+CREATE TABLE PUBLISHER (
+    PID INT PRIMARY KEY,
+    PNAME VARCHAR(255),
+    ADDRESS VARCHAR(255),
+    STATE VARCHAR(255),
+    PHONE VARCHAR(15),
+    EMAILID VARCHAR(255)
+);
+
+CREATE TABLE BOOK (
+    ISBN INT PRIMARY KEY,
+    BOOK_TITLE VARCHAR(255),
+    CATEGORY VARCHAR(255),
+    PRICE DECIMAL(10, 2),
+    COPYRIGHT_DATE DATE,
+    YEAR INT,
+    PAGE_COUNT INT,
+    PID INT,
+    FOREIGN KEY (PID) REFERENCES PUBLISHER(PID)
+);
+
+CREATE TABLE AUTHOR (
+    AID INT PRIMARY KEY,
+    ANAME VARCHAR(255),
+    STATE VARCHAR(255),
+    CITY VARCHAR(255),
+    ZIP VARCHAR(10),
+    PHONE VARCHAR(15),
+    URL VARCHAR(255)
+);
+
+CREATE TABLE AUTHOR_BOOK (
+    AID INT,
+    ISBN INT,
+    PRIMARY KEY (AID, ISBN),
+    FOREIGN KEY (AID) REFERENCES AUTHOR(AID),
+    FOREIGN KEY (ISBN) REFERENCES BOOK(ISBN)
+);
+
+CREATE TABLE REVIEW (
+    RID INT PRIMARY KEY,
+    ISBN INT,
+    RATING INT,
+    FOREIGN KEY (ISBN) REFERENCES BOOK(ISBN)
+);
+
+-- Queries
+
+-- 1. Retrieve city, phone, url of author whose name is ‘CHETAN BHAGAT’.
+SELECT CITY, PHONE, URL
+FROM AUTHOR
+WHERE ANAME = 'CHETAN BHAGAT';
+
+-- 2. Retrieve book title, reviewable id and rating of all books.
+SELECT B.BOOK_TITLE, R.RID, R.RATING
+FROM BOOK B
+LEFT JOIN REVIEW R ON B.ISBN = R.ISBN;
+
+-- 3. Retrieve book title, price, author name and url for publishers ‘MEHTA’.
+SELECT B.BOOK_TITLE, B.PRICE, A.ANAME, A.URL
+FROM BOOK B
+INNER JOIN PUBLISHER P ON B.PID = P.PID
+INNER JOIN AUTHOR_BOOK AB ON B.ISBN = AB.ISBN
+INNER JOIN AUTHOR A ON AB.AID = A.AID
+WHERE P.PNAME = 'MEHTA';
+
+-- 4. In a PUBLISHER relation change the phone number of ‘MEHTA’ to 123456.
+UPDATE PUBLISHER
+SET PHONE = '123456'
+WHERE PNAME = 'MEHTA';
+
+-- 5. Calculate and display the average, maximum, minimum price of each publisher.
+SELECT P.PNAME, AVG(B.PRICE) AS AveragePrice, MAX(B.PRICE) AS MaxPrice, MIN(B.PRICE) AS MinPrice
+FROM PUBLISHER P
+LEFT JOIN BOOK B ON P.PID = B.PID
+GROUP BY P.PNAME;
+
+-- 6. Delete details of all books having a page count less than 100.
+DELETE FROM BOOK
+WHERE PAGE_COUNT < 100;
+
+-- 7. Retrieve details of all authors residing in city Pune and whose name begins with character ‘C’.
+SELECT *
+FROM AUTHOR
+WHERE CITY = 'Pune' AND ANAME LIKE 'C%';
+
+-- 8. Retrieve details of authors residing in the same city as ‘Korth’.
+SELECT A.*
+FROM AUTHOR A
+WHERE A.CITY = (SELECT CITY FROM AUTHOR WHERE ANAME = 'Korth');
+
+-- 9. Create a procedure to update the value of page count of a book of a given ISBN.
+/*
+DELIMITER //: Temporarily changes the delimiter to // for defining the stored procedure.
+CREATE PROCEDURE UpdatePageCount(IN isbnToUpdate INT, IN newPageCount INT): Begins the creation of a stored procedure named UpdatePageCount with two input parameters.
+BEGIN: Marks the start of the procedure's body.
+UPDATE BOOK SET PAGE_COUNT = newPageCount WHERE ISBN = isbnToUpdate;: Contains the SQL statement to update the PAGE_COUNT in the BOOK table.
+END: Marks the end of the procedure's body.
+//: Custom delimiter indicating the end of the procedure definition.
+DELIMITER ;: Restores the delimiter to the default semicolon for subsequent SQL statements.
+*/
+DELIMITER //
+CREATE PROCEDURE UpdatePageCount(IN isbnToUpdate INT, IN newPageCount INT)
+BEGIN
+    UPDATE BOOK
+    SET PAGE_COUNT = newPageCount
+    WHERE ISBN = isbnToUpdate;
+END //
+DELIMITER ;
+
+-- 10. Create a function that returns the price of a book with a given ISBN.
+DELIMITER //
+CREATE FUNCTION GetBookPrice(isbn INT) RETURNS DECIMAL(10, 2)
+BEGIN
+    DECLARE bookPrice DECIMAL(10, 2);
+    SELECT PRICE INTO bookPrice FROM BOOK WHERE ISBN = isbn;
+    RETURN bookPrice;
+END //
+DELIMITER ;
