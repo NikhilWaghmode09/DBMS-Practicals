@@ -1,0 +1,127 @@
+The following tables form part of a database held in a relational DBMS:
+Hotel (HotelNo, Name, City)
+Room (RoomNo, HotelNo, Type, Price)
+Booking (HotelNo, GuestNo, DateFrom, DateTo, RoomNo)
+Guest (GuestNo, GuestName, GuestAddress)
+Solve following queries by SQL
+1. List full details of all hotels.
+2. List full details of all hotels in London.
+3. List all guests currently staying at the Grosvenor Hotel.
+4. List the names and addresses of all guests in London, alphabetically ordered by name.
+5. List the bookings for which no date_to has been specified.
+6. How many hotels are there?
+7. List the rooms that are currently unoccupied at the Grosvenor Hotel.
+8. What is the lost income from unoccupied rooms at each hotel today?
+9. Create index on one of the field and show is performance in query.
+10. Create one view on above database and query it.
+
+-- Create the tables
+CREATE TABLE Hotel (
+    HotelNo INT PRIMARY KEY,
+    Name VARCHAR(255),
+    City VARCHAR(255)
+);
+
+CREATE TABLE Room (
+    RoomNo INT PRIMARY KEY,
+    HotelNo INT,
+    Type VARCHAR(255),
+    Price DECIMAL(10, 2),
+    FOREIGN KEY (HotelNo) REFERENCES Hotel(HotelNo)
+);
+
+CREATE TABLE Booking (
+    HotelNo INT,
+    GuestNo INT,
+    DateFrom DATE,
+    DateTo DATE,
+    RoomNo INT,
+    FOREIGN KEY (HotelNo) REFERENCES Hotel(HotelNo),
+    FOREIGN KEY (RoomNo) REFERENCES Room(RoomNo)
+);
+
+CREATE TABLE Guest (
+    GuestNo INT PRIMARY KEY,
+    GuestName VARCHAR(255),
+    GuestAddress VARCHAR(255)
+);
+
+-- Insert sample data
+INSERT INTO Hotel (HotelNo, Name, City) VALUES
+    (1, 'Grosvenor Hotel', 'London'),
+    (2, 'Marriott Hotel', 'New York'),
+    (3, 'Sheraton Hotel', 'Paris');
+
+INSERT INTO Room (RoomNo, HotelNo, Type, Price) VALUES
+    (101, 1, 'Single', 150.00),
+    (102, 1, 'Double', 200.00),
+    (201, 2, 'Single', 180.00),
+    (202, 2, 'Double', 250.00);
+
+INSERT INTO Guest (GuestNo, GuestName, GuestAddress) VALUES
+    (1, 'John Smith', '123 Main St, London'),
+    (2, 'Alice Johnson', '456 Elm St, New York'),
+    (3, 'David Lee', '789 Oak St, Paris');
+
+INSERT INTO Booking (HotelNo, GuestNo, DateFrom, DateTo, RoomNo) VALUES
+    (1, 1, '2023-11-01', '2023-11-05', 101),
+    (1, 2, '2023-11-02', '2023-11-06', 102),
+    (2, 2, '2023-11-03', '2023-11-07', 201),
+    (2, 3, '2023-11-04', '2023-11-08', 202);
+
+-- Queries
+-- 1. List full details of all hotels.
+SELECT * FROM Hotel;
+
+-- 2. List full details of all hotels in London.
+SELECT * FROM Hotel WHERE City = 'London';
+
+-- 3. List all guests currently staying at the Grosvenor Hotel.
+SELECT G.GuestName
+FROM Guest G
+INNER JOIN Booking B ON G.GuestNo = B.GuestNo
+INNER JOIN Hotel H ON B.HotelNo = H.HotelNo
+WHERE H.Name = 'Grosvenor Hotel' AND B.DateTo >= CURDATE();
+
+-- 4. List the names and addresses of all guests in London, alphabetically ordered by name.
+SELECT GuestName, GuestAddress
+FROM Guest
+WHERE GuestNo IN (
+    SELECT GuestNo
+    FROM Booking B
+    JOIN Hotel H ON B.HotelNo = H.HotelNo
+    WHERE H.City = 'London'
+)
+ORDER BY GuestName;
+
+-- 5. List the bookings for which no DateTo has been specified.
+SELECT * FROM Booking WHERE DateTo IS NULL;
+
+-- 6. How many hotels are there?
+SELECT COUNT(*) AS HotelCount FROM Hotel;
+
+-- 7. List the rooms that are currently unoccupied at the Grosvenor Hotel.
+SELECT R.RoomNo
+FROM Room R
+LEFT JOIN Booking B ON R.RoomNo = B.RoomNo AND B.HotelNo = 1
+WHERE B.RoomNo IS NULL;
+
+-- 8. What is the lost income from unoccupied rooms at each hotel today?
+SELECT H.Name, COALESCE(SUM(R.Price), 0) AS LostIncome
+FROM Hotel H
+LEFT JOIN Room R ON H.HotelNo = R.HotelNo
+LEFT JOIN Booking B ON R.RoomNo = B.RoomNo AND B.DateFrom <= CURDATE() AND (B.DateTo IS NULL OR B.DateTo > CURDATE())
+GROUP BY H.HotelNo;
+
+-- 9. Create an index on a field (e.g., HotelNo in Room table)
+CREATE INDEX idx_HotelNo ON Room (HotelNo);
+
+-- 10. Create a view and query it (e.g., a view of all bookings with guest and hotel information)
+CREATE VIEW BookingInfo AS
+SELECT B.HotelNo, B.GuestNo, B.DateFrom, B.DateTo, B.RoomNo, G.GuestName, G.GuestAddress, H.Name AS HotelName
+FROM Booking B
+JOIN Guest G ON B.GuestNo = G.GuestNo
+JOIN Hotel H ON B.HotelNo = H.HotelNo;
+
+-- Query the view
+SELECT * FROM BookingInfo;
